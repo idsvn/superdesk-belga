@@ -19,7 +19,8 @@ from superdesk import get_resource_service
 from superdesk.errors import SuperdeskIngestError
 from superdesk.io.feeding_services import FeedingService
 from superdesk.io.registry import register_feeding_service
-
+from superdesk.media.media_operations import download_file_from_url
+from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,14 @@ class QueueEventsListener(stomp.ConnectionListener):
         if new_items:
             list_items.extend(resources_service.post(new_items))
         return [item[superdesk.config.ID_FIELD] for item in list_items]
+
+
+def add_event_file(file):
+    content, filename, mimetype = download_file_from_url(file['url'])
+    media_id = app.media.put(
+        content, filename=filename, content_type=mimetype, resource='events_files')
+    event_file_service = get_resource_service('events_files')
+    return event_file_service.post([{"media": media_id, "original_id": file['original_id']}])[0]
 
 
 register_feeding_service(QueueEventsFeedingService)

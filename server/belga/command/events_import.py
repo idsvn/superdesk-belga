@@ -3,6 +3,7 @@ import json
 
 from superdesk import get_resource_service
 from belga.io.feed_parsers.belga_queue_events import BelgaQueueEventsParser
+from belga.io.feeding_services.queue_events_belga import add_event_file
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,16 +24,19 @@ def import_events_via_json_file(path_file):
         parser = BelgaQueueEventsParser()
         for item in json_data:
             event = parser.parse(item.get('data'))
+            files = []
+            for file in event.get('files'):
+                files.append(add_event_file(file))
+            event['files'] = files
             if not event_service.find_one(req=None, original_id=event.get('original_id')):
                 event['contacts'] = get_id_resource(contact_service, event['contacts'])
                 get_id_resource(location_service, event['locations'])
-                event_service.post([event])('events').post([event])
+                event_service.post([event])
                 logger.info("import event: " + event.get('original_id'))
         return
-def download_event_file(url):
-    pass
 
-def get_id_resource(self, resources_service, items):
+
+def get_id_resource(resources_service, items):
     """Query resource bases on original_id, create new if not exists.
     Return list of resources id, include both old and new inserted resources.
     """
