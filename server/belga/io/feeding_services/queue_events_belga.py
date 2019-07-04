@@ -88,17 +88,33 @@ class QueueEventsListener(stomp.ConnectionListener):
         logger.error('Provider %s: Queue %s: received an error "%s"', self.provider.get('name'), self.queue, message)
 
     def on_message(self, headers, message):
+        event_service = get_resource_service('events')
         message = json.loads(message)
-        if message['type'] == 'delete':
-            pass
-        parser = BelgaQueueEventsParser()
-        parser.can_parse(message['data'])
         with superdesk.app.app_context():
+            action = message.get('type', '').lower()
+            if action not in ('delete', 'create', 'update'):
+                raise ValueError('Unknown action ', action)
+
+            if action == 'delete':
+                event_service.delete({'original_id': message['eventId']})
+                logger.info(
+                    'Provider %s: Deleted event with original id: ',
+                    self.provider.get('name'), message['eventId'])
+                return
+
+            parser = BelgaQueueEventsParser()
+            parser.can_parse(message['data'])
+            data = parser.parse(message['data'])
+            data['contacts'] = self._get_id_resource('contacts', data['contacts'])
+            self._get_id_resource('locations', data['locations'])
             if message['type'] == 'create':
-                message = parser.parse(message['data'])
-                message['contacts'] = self._get_id_resource('contacts', message['contacts'])
-                self._get_id_resource('locations', message['locations'])
-                get_resource_service('events').post([message])
+                event_service.post([data])
+                logger.info(
+                    'Provider %s: Inserted new event item %s from Belga: ',
+                    self.provider.get('name'), data['original_id'])
+            elif message['type'] == 'update':
+                old_item = event_service.find_one(original_id=data['original_id'], req=None)
+                event_service.patch(old_item[superdesk.config.ID_FIELD], data)
 
     def _get_id_resource(self, service, items):
         """Query resource bases on original_id, create new if not exists.
@@ -106,16 +122,16 @@ class QueueEventsListener(stomp.ConnectionListener):
         """
         resources_service = get_resource_service(service)
         new_items = []
-        list_items = []
+        list_items_id = []
         for item in items:
-            _item = resources_service.find({'original_id': item['original_id']})
+            _item = list(resources_service.find({'original_id': item['original_id']}))
             if not _item:
                 new_items.append(item)
             else:
-                list_items.extend(_item)
+                list_items_id.append(_item[0][superdesk.config.ID_FIELD])
         if new_items:
-            list_items.extend(resources_service.post(new_items))
-        return [item[superdesk.config.ID_FIELD] for item in list_items]
+            list_items_id.extend(resources_service.post(new_items))
+        return list_items_id
 
 
 def add_event_file(file):
