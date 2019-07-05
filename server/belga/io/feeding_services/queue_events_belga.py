@@ -107,14 +107,29 @@ class QueueEventsListener(stomp.ConnectionListener):
             data = parser.parse(message['data'])
             data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
             self._get_id_resource('locations', data['locations'])
-            if message['type'] == 'create':
-                event_service.post([data])
-                logger.info(
-                    'Provider %s: Inserted new event item %s from Belga: ',
-                    self.provider.get('name'), data['original_id'])
-            elif message['type'] == 'update':
+
+            if message['type'] == 'update':
                 old_item = event_service.find_one(original_id=data['original_id'], req=None)
-                event_service.patch(old_item[superdesk.config.ID_FIELD], data)
+                if old_item:
+                    # lookup files to avoid adding new file each time update
+                    list_files_id = []
+                    for fi in data.get('files', []):
+                        efile = get_resource_service('events_files').find_one(original_id=fi['original_id'], req=None)
+                        if efile:
+                            list_files_id.append(efile[superdesk.config.ID_FIELD])
+                        else:
+                            list_files_id.append(add_event_file(fi))
+                    if list_files_id:
+                        data['files'] = list_files_id
+
+                    event_service.patch(old_item[superdesk.config.ID_FIELD], data)
+                    return
+
+            data['files'] = [add_event_file(fi) for fi in data.get('files', [])]
+            event_service.post([data])
+            logger.info(
+                'Provider %s: Inserted new event item %s from Belga: ',
+                self.provider.get('name'), data['original_id'])
 
     def _get_id_resource(self, service, items):
         """Query resource bases on original_id, create new if not exists.
