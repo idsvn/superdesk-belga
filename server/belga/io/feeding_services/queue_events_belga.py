@@ -105,7 +105,7 @@ class QueueEventsListener(stomp.ConnectionListener):
             parser = BelgaQueueEventsParser()
             parser.can_parse(message['data'])
             data = parser.parse(message['data'])
-            data['contacts'] = self._get_id_resource('contacts', data['contacts'])
+            data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
             self._get_id_resource('locations', data['locations'])
             if message['type'] == 'create':
                 event_service.post([data])
