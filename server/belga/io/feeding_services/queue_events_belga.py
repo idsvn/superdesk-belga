@@ -10,6 +10,7 @@
 
 import json
 import logging
+from copy import deepcopy
 
 import stomp
 
@@ -20,6 +21,8 @@ from superdesk.errors import SuperdeskIngestError
 from superdesk.io.feeding_services import FeedingService
 from superdesk.io.registry import register_feeding_service
 from superdesk.media.media_operations import download_file_from_url
+from superdesk.metadata.item import GUID_FIELD
+
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -106,7 +109,9 @@ class QueueEventsListener(stomp.ConnectionListener):
             parser.can_parse(message['data'])
             data = parser.parse(message['data'])
             data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
-            self._get_id_resource('locations', data['locations'])
+            qcodes = self._get_id_resource('locations', deepcopy(data['location']), GUID_FIELD)
+            for location, qcode in zip(data['location'], qcodes):
+                location['qcode'] = qcode
 
             if message['type'] == 'update':
                 old_item = event_service.find_one(original_id=data['original_id'], req=None)
@@ -131,9 +136,9 @@ class QueueEventsListener(stomp.ConnectionListener):
                 'Provider %s: Inserted new event item %s from Belga: ',
                 self.provider.get('name'), data['original_id'])
 
-    def _get_id_resource(self, service, items):
+    def _get_id_resource(self, service, items, _id=superdesk.config.ID_FIELD):
         """Query resource bases on original_id, create new if not exists.
-        Return list of resources id, include both old and new inserted resources.
+        Return list of resources _id, include both old and new inserted resources.
         """
         resources_service = get_resource_service(service)
         new_items = []
@@ -143,9 +148,11 @@ class QueueEventsListener(stomp.ConnectionListener):
             if not _item:
                 new_items.append(item)
             else:
-                list_items_id.append(_item[0][superdesk.config.ID_FIELD])
+                resources_service.patch(_item[0][superdesk.config.ID_FIELD], item)
+                list_items_id.append(_item[0][_id])
         if new_items:
-            list_items_id.extend(resources_service.post(new_items))
+            resources_service.post(new_items)
+            list_items_id.extend([item[_id] for item in new_items])
         return list_items_id
 
 

@@ -71,7 +71,7 @@ class BelgaQueueEventsParser(FeedParser):
                     'tz': timezone,
                 },
                 'calendars': [],
-                'locations': self._parse_location(data['venueInfo']),
+                'location': self._parse_location(data['venueInfo']),
                 'contacts': self._parse_contacts(data['contacts']),
                 'links': [data.get('url')] if data.get('url') else [],  # avoid display empty link
                 'versioncreated': self._parse_date(timezone, data['createdDate']),
