@@ -61,7 +61,7 @@ class BelgaQueueEventsTest(TestCase):
             'original_id': 234567,
 
         })
-        self.assertDictEqual(item['locations'][0], {
+        self.assertDictEqual(item['location'][0], {
             'name': "ING Contact Centre LLN",
             'address': {
                 'line': ["6", "traverse d'Esope"],
@@ -90,4 +90,13 @@ class BelgaQueueEventsTest(TestCase):
             'number': '123456789',
             'usage': 'Confidential',
             'public': False,
+        }])
+        self.assertListEqual(contact['mobile'], [{
+            'number': '012012012',
+            'usage': 'Confidential',
+            'public': False,
+        }, {
+            'number': '987654321',
+            'usage': 'Business',
+            'public': True,
         }])

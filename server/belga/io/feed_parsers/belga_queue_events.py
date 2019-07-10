@@ -154,7 +154,11 @@ class BelgaQueueEventsParser(FeedParser):
                 'usage': 'Confidential' if phone in phone_confidential_types else 'Business',
                 'public': phone not in phone_confidential_types,
             } for phone in phone_types + phone_confidential_types if contact.get(phone)],
-            'mobile': _get_contact_values(contact, ['personalMobile', 'mobile247']),
+            'mobile': [{
+                'number': contact.get(phone),
+                'usage': 'Confidential' if phone == 'personalMobile' else 'Business',
+                'public': phone != 'personalMobile',
+            } for phone in ['personalMobile', 'mobile247'] if contact.get(phone)],
             'website': contact.get('url'),
             'twitter': contact.get('twitter'),
             'facebook': contact.get('facebook'),
