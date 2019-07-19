@@ -110,10 +110,22 @@ class QueueEventsListener(stomp.ConnectionListener):
             data = parser.parse(message['data'])
             if data.get('contacts'):
                 data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
+
+            location_service = get_resource_service('locations')
             if data.get('location'):
-                qcodes = self._get_id_resource('locations', deepcopy(data['location']), GUID_FIELD)
-                for location, qcode in zip(data['location'], qcodes):
-                    location['qcode'] = qcode
+                location = data['location'][0]
+                saved_location = list(location_service.find({
+                    'name': location['name'],
+                    'address.line': location['address']['line'],
+                    'address.country': location['address']['country'],
+                }))
+                if saved_location:
+                    location_service.patch(saved_location[0][superdesk.config.ID_FIELD], location)
+                    location['qcode'] = saved_location[0][GUID_FIELD]
+                else:
+                    _location = deepcopy(location)
+                    location_service.post([_location])
+                    location['qcode'] = _location[GUID_FIELD]
 
             history_service = get_resource_service('events_history')
             if message['type'] == 'update':

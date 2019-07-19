@@ -32,11 +32,21 @@ def import_events_via_json_file(path_file):
             if not event_service.find_one(req=None, original_id=event.get('original_id')):
                 if event.get('contacts'):
                     event['event_contact_info'] = get_id_resource('contacts', event.pop('contacts'))
-                if event.get('location'):
-                    qcodes = get_id_resource('locations', deepcopy(event['location']), GUID_FIELD)
-                    for location, qcode in zip(event['location'], qcodes):
-                        location['qcode'] = qcode
 
+                if event.get('location'):
+                    location = event['location'][0]
+                    saved_location = list(location_service.find({
+                        'name': location['name'],
+                        'address.line': location['address']['line'],
+                        'address.country': location['address']['country'],
+                    }))
+                    if saved_location:
+                        location_service.patch(saved_location[0][superdesk.config.ID_FIELD], location)
+                        location['qcode'] = saved_location[0][GUID_FIELD]
+                    else:
+                        _location = deepcopy(location)
+                        location_service.post([_location])
+                        location['qcode'] = _location[GUID_FIELD]
                 event_service.post([event])
                 get_resource_service('events_history').on_item_created([event])
                 logger.info("import event: " + str(event.get('original_id')))
