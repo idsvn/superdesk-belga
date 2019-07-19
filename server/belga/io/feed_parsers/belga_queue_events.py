@@ -10,9 +10,9 @@
 
 import logging
 from copy import deepcopy
-from datetime import datetime
 
 from pytz import country_timezones
+from dateutil.parser import parse
 
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.io.registry import register_feed_parser
@@ -30,8 +30,9 @@ class BelgaQueueEventsParser(FeedParser):
     label = 'Belga Queue Events Parser'
 
     REQUIRED_FIELD = [
-        'eventId', 'startDate', 'endDate', 'createdDate', 'countryCode', 'mainRubric.rubricTexts', 'rubricEvent',
-        'venueInfo.venueId', 'venueInfo.street', 'venueInfo.streetNumber', 'venueInfo.country.countryTexts'
+        'eventId', 'startDate', 'endDate', 'createdDate', 'countryCode', 'mainRubric.rubricTexts',
+        'venueInfo.venueId', 'venueInfo.country.countryTexts',
+
     ]
     OPTIONAL_FIELD = ['lastUpdateTime']
 
@@ -41,6 +42,7 @@ class BelgaQueueEventsParser(FeedParser):
 
         for field in self.REQUIRED_FIELD:
             if not self._get(data, field):
+                logger.error('Event %s: Missing field %s', data.get('eventId'), field)
                 return False
         return True
 
@@ -79,14 +81,16 @@ class BelgaQueueEventsParser(FeedParser):
                 'firstcreated': self._parse_date(timezone, data['createdDate']),
             }
             event = self._get_en_item(data['eventContents'])
-            item.update({'name': event['title'], 'definition_short': event['subject']})
+            item.update({'name': event.get('title'), 'definition_short': event.get('subject')})
 
             if data.get('contacts'):
                 item['contacts'] = self._parse_contacts(data['contacts'])
                 # update contact updated and created date:
                 for c1, c2 in zip(item['contacts'], data['contacts']):
-                    c1["_updated"] = self._parse_date(timezone, c2['updatedDate'])
                     c1["_created"] = self._parse_date(timezone, c2['createdDate'])
+                    updated = self._parse_date(timezone, c2['updatedDate'])
+                    if updated:
+                        c1['_updated'] = updated
 
             if data.get('eventUploadContents'):
                 item['files'] = [{
@@ -95,7 +99,7 @@ class BelgaQueueEventsParser(FeedParser):
                     'original_id': fi['eventUploadId'],
                 } for fi in data['eventUploadContents']]
 
-            if data.get('lastUpdateTime'):
+            if data.get('lastUpdateTime') and self._parse_date(timezone, data['lastUpdateTime']):
                 item['_updated'] = self._parse_date(timezone, data['lastUpdateTime'])
 
             for rubric in [data['mainRubric']] + data.get('rubricEvent', []):
@@ -120,7 +124,7 @@ class BelgaQueueEventsParser(FeedParser):
         """Convert string to UTC datetime object, timezone is based on country_code
         """
         try:
-            return local_to_utc(timezone, datetime.strptime(time, '%d/%m/%Y %H:%M'))
+            return local_to_utc(timezone, parse(time, dayfirst=True))
         except ValueError:
             return None
 
@@ -128,21 +132,18 @@ class BelgaQueueEventsParser(FeedParser):
         """Parse location info from belga to superdesk format
         """
         return [{
-            'name': location['venueName'],
+            'name': location.get('venueName', ''),
             'address': {
-                'line': [location['streetNumber'], location['street']],
-                'locality': location['city'],
-                'area': location['province'],
+                'line': self._get_values(location, ['streetNumber', 'street']),
+                'locality': location.get('city'),
+                'area': location.get('province'),
                 'country': self._get_en_item(location['country']['countryTexts'])['name'],
-                'postal_code': location['postCode'],
+                'postal_code': location.get('postCode'),
             },
             'original_id': location['venueId'],
         }]
 
     def _parse_contacts(self, contacts):
-        def _get_contact_values(contact, types):
-            return [contact.get(_type) for _type in types if contact.get(_type)]
-
         phone_types = [
             'phoneGeneral', 'directPhone1', 'directPhone2', 'gsm1', 'gsm2', 'semaphone',
         ]
@@ -154,7 +155,7 @@ class BelgaQueueEventsParser(FeedParser):
             'last_name': contact.get('lastName'),
             'organisation': contact.get('company'),
             'job_title': contact.get('function'),
-            'contact_email': _get_contact_values(contact, ['email', 'personalEmail']),
+            'contact_email': self._get_values(contact, ['email', 'personalEmail']),
             'contact_phone': [{
                 'number': contact.get(phone),
                 'usage': 'Confidential' if phone in phone_confidential_types else 'Business',
@@ -169,11 +170,17 @@ class BelgaQueueEventsParser(FeedParser):
             'twitter': contact.get('twitter'),
             'facebook': contact.get('facebook'),
             'fax': contact.get('fax'),
-            "contact_address": _get_contact_values(contact, ['professionalAddress', 'personalAddress']),
+            "contact_address": self._get_values(contact, ['professionalAddress', 'personalAddress']),
             'notes': contact.get('information'),
             "is_active": True,
             'public': contact.get('belgaPublic') == 'Y',
         } for contact in contacts]
+
+    def _get_values(self, items, keys):
+        """
+        Return list of value only if it is not falsy
+        """
+        return [items.get(key) for key in keys if items.get(key)]
 
 
 register_feed_parser(BelgaQueueEventsParser.NAME, BelgaQueueEventsParser())
