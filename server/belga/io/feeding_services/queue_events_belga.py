@@ -108,12 +108,14 @@ class QueueEventsListener(stomp.ConnectionListener):
             parser = BelgaQueueEventsParser()
             parser.can_parse(message['data'])
             data = parser.parse(message['data'])
-            data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
-            qcodes = self._get_id_resource('locations', deepcopy(data['location']), GUID_FIELD)
-            history_service = get_resource_service('events_history')
-            for location, qcode in zip(data['location'], qcodes):
-                location['qcode'] = qcode
+            if data.get('contacts'):
+                data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
+            if data.get('location'):
+                qcodes = self._get_id_resource('locations', deepcopy(data['location']), GUID_FIELD)
+                for location, qcode in zip(data['location'], qcodes):
+                    location['qcode'] = qcode
 
+            history_service = get_resource_service('events_history')
             if message['type'] == 'update':
                 old_item = event_service.find_one(original_id=data['original_id'], req=None)
                 if old_item:

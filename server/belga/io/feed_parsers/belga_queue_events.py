@@ -30,13 +30,15 @@ class BelgaQueueEventsParser(FeedParser):
     label = 'Belga Queue Events Parser'
 
     REQUIRED_FIELD = [
-        'eventId', 'startDate', 'endDate', 'createdDate', 'url', 'contacts', 'countryCode', 'eventUploadContents',
-        'mainRubric.rubricTexts', 'rubricEvent', 'eventUploadContents',
+        'eventId', 'startDate', 'endDate', 'createdDate', 'countryCode', 'mainRubric.rubricTexts', 'rubricEvent',
         'venueInfo.venueId', 'venueInfo.street', 'venueInfo.streetNumber', 'venueInfo.country.countryTexts'
     ]
     OPTIONAL_FIELD = ['lastUpdateTime']
 
     def can_parse(self, data):
+        if not data:
+            return False
+
         for field in self.REQUIRED_FIELD:
             if not self._get(data, field):
                 return False
@@ -72,7 +74,6 @@ class BelgaQueueEventsParser(FeedParser):
                 },
                 'calendars': [],
                 'location': self._parse_location(data['venueInfo']),
-                'contacts': self._parse_contacts(data['contacts']),
                 'links': [data.get('url')] if data.get('url') else [],  # avoid display empty link
                 'versioncreated': self._parse_date(timezone, data['createdDate']),
                 'firstcreated': self._parse_date(timezone, data['createdDate']),
@@ -80,10 +81,12 @@ class BelgaQueueEventsParser(FeedParser):
             event = self._get_en_item(data['eventContents'])
             item.update({'name': event['title'], 'definition_short': event['subject']})
 
-            # update contact updated and created date:
-            for c1, c2 in zip(item['contacts'], data['contacts']):
-                c1["_updated"] = self._parse_date(timezone, c2['updatedDate'])
-                c1["_created"] = self._parse_date(timezone, c2['createdDate'])
+            if data.get('contacts'):
+                item['contacts'] = self._parse_contacts(data['contacts'])
+                # update contact updated and created date:
+                for c1, c2 in zip(item['contacts'], data['contacts']):
+                    c1["_updated"] = self._parse_date(timezone, c2['updatedDate'])
+                    c1["_created"] = self._parse_date(timezone, c2['createdDate'])
 
             if data.get('eventUploadContents'):
                 item['files'] = [{
@@ -116,7 +119,10 @@ class BelgaQueueEventsParser(FeedParser):
     def _parse_date(self, timezone, time):
         """Convert string to UTC datetime object, timezone is based on country_code
         """
-        return local_to_utc(timezone, datetime.strptime(time, '%d/%m/%Y %H:%M'))
+        try:
+            return local_to_utc(timezone, datetime.strptime(time, '%d/%m/%Y %H:%M'))
+        except ValueError:
+            return None
 
     def _parse_location(self, location):
         """Parse location info from belga to superdesk format
