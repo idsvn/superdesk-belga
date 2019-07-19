@@ -110,6 +110,7 @@ class QueueEventsListener(stomp.ConnectionListener):
             data = parser.parse(message['data'])
             data['event_contact_info'] = self._get_id_resource('contacts', data.pop('contacts'))
             qcodes = self._get_id_resource('locations', deepcopy(data['location']), GUID_FIELD)
+            history_service = get_resource_service('events_history')
             for location, qcode in zip(data['location'], qcodes):
                 location['qcode'] = qcode
 
@@ -128,10 +129,17 @@ class QueueEventsListener(stomp.ConnectionListener):
                         data['files'] = list_files_id
 
                     event_service.patch(old_item[superdesk.config.ID_FIELD], data)
+                    non_history_fields = ['original_id', 'versioncreated']
+                    updates = {
+                        k: data[k] for k in data
+                        if data[k] != old_item.get(k) and not k.startswith('_') and k not in non_history_fields
+                    }
+                    history_service._save_history(old_item, updates, 'edited')
                     return
 
             data['files'] = [add_event_file(fi) for fi in data.get('files', [])]
             event_service.post([data])
+            history_service.on_item_created([data])
             logger.info(
                 'Provider %s: Inserted new event item %s from Belga: ',
                 self.provider.get('name'), data['original_id'])
