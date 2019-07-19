@@ -1,10 +1,12 @@
-import superdesk
 import json
+import logging
+from copy import deepcopy
 
-from superdesk import get_resource_service
+import superdesk
 from belga.io.feed_parsers.belga_queue_events import BelgaQueueEventsParser
 from belga.io.feeding_services.queue_events_belga import add_event_file
-import logging
+from superdesk import get_resource_service
+from superdesk.metadata.item import GUID_FIELD
 
 logger = logging.getLogger(__name__)
 
@@ -16,41 +18,49 @@ def import_events_via_json_file(path_file):
     :param unit_test:
     :return:
     """
-    with open(path_file, 'rt', encoding='utf-8') as contacts_data:
-        json_data = json.load(contacts_data)
+    with open(path_file, 'rt', encoding='utf-8') as events_data:
+        json_data = json.load(events_data)
         event_service = get_resource_service('events')
         contact_service = get_resource_service('contacts')
         location_service = get_resource_service('locations')
         parser = BelgaQueueEventsParser()
         for item in json_data:
-            event = parser.parse(item.get('data'))
-            files = []
-            for file in event.get('files'):
-                files.append(add_event_file(file))
-            event['files'] = files
+            if not parser.can_parse(item):
+                continue
+            event = parser.parse(item)
+            event['files'] = [add_event_file(file) for file in event.get('files', [])]
             if not event_service.find_one(req=None, original_id=event.get('original_id')):
-                event['contacts'] = get_id_resource(contact_service, event['contacts'])
-                get_id_resource(location_service, event['locations'])
+                if event.get('contacts'):
+                    event['event_contact_info'] = get_id_resource('contacts', event.pop('contacts'))
+                if event.get('location'):
+                    qcodes = get_id_resource('locations', deepcopy(event['location']), GUID_FIELD)
+                    for location, qcode in zip(event['location'], qcodes):
+                        location['qcode'] = qcode
+
                 event_service.post([event])
-                logger.info("import event: " + event.get('original_id'))
+                get_resource_service('events_history').on_item_created([event])
+                logger.info("import event: " + str(event.get('original_id')))
         return
 
 
-def get_id_resource(resources_service, items):
+def get_id_resource(service, items, _id=superdesk.config.ID_FIELD):
     """Query resource bases on original_id, create new if not exists.
     Return list of resources id, include both old and new inserted resources.
     """
+    resources_service = get_resource_service(service)
     new_items = []
-    list_items = []
+    list_items_id = []
     for item in items:
-        _item = resources_service.find({'original_id': item['original_id']})
+        _item = list(resources_service.find({'original_id': item['original_id']}))
         if not _item:
             new_items.append(item)
         else:
-            list_items.extend(_item)
+            resources_service.patch(_item[0][superdesk.config.ID_FIELD], item)
+            list_items_id.append(_item[0][_id])
     if new_items:
-        list_items.extend(resources_service.post(new_items))
-    return [item[superdesk.config.ID_FIELD] for item in list_items]
+        resources_service.post(new_items)
+        list_items_id.extend([item[_id] for item in new_items])
+    return list_items_id
 
 
 class EventImportCommand(superdesk.Command):
