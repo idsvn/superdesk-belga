@@ -65,8 +65,8 @@ class BelgaQueueEventsTest(TestCase):
             'name': "ING Contact Centre LLN",
             'address': {
                 'line': ["6", "traverse d'Esope"],
-                'locality': "Louvain-la-Neuve",
-                'area': "BRABANT WALLON",
+                'locality': "BRABANT WALLON",
+                'area': "Louvain-la-Neuve",
                 'country': "BELGIUM",
                 'postal_code': "1348",
             },

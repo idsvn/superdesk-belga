@@ -134,9 +134,9 @@ class BelgaQueueEventsParser(FeedParser):
         return [{
             'name': location.get('venueName', ''),
             'address': {
-                'line': self._get_values(location, ['streetNumber', 'street']),
-                'locality': location.get('city'),
-                'area': location.get('province'),
+                'line': self._get_values(location, ['box', 'streetNumber', 'street']),
+                'area': location.get('city'),
+                'locality': location.get('province'),
                 'country': self._get_en_item(location['country']['countryTexts'])['name'],
                 'postal_code': location.get('postCode'),
             },
