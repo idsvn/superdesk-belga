@@ -101,10 +101,15 @@ class AutoPublishService():
             # no matching rules available
             if not tenants or not tenants[0].get('route'):
                 return
-            r = get_resource_service('archive_publish').patch(
-                id=item['_id'],
-                updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
-            )
+            try:
+                get_resource_service('archive_publish').patch(
+                    id=item['_id'],
+                    updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
+                )
+                logger.info('belga:publish:autopublish: Published item %s' % item.get('guid'))
+            # invalid item raise outside app context
+            except RuntimeError:
+                pass
 
     def get_resources(self):
         req = ParsedRequest()
