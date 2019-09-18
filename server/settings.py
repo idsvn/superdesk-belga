@@ -9,8 +9,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from datetime import timedelta
 from pathlib import Path
-from superdesk.default_settings import INSTALLED_APPS, env
+
+from superdesk.default_settings import CELERY_BEAT_SCHEDULE, INSTALLED_APPS, env
 
 ABS_PATH = str(Path(__file__).resolve().parent)
 
@@ -214,3 +216,15 @@ PLANNING_EXPORT_BODY_TEMPLATE = '''
 {% endif %}
 {% endfor %}
 '''
+
+CELERY_BEAT_SCHEDULE.update({
+    'publish:auto': {
+        'task': 'belga.publish.autopublish',
+        'schedule': timedelta(seconds=10)
+    }
+})
+
+SUPERDESK_PUBLISHER_URL = env('SUPERDESK_PUBLISHER_URL')
+# use for auth with publisher in autopublish
+SUPERDESK_USERNAME = env('SUPERDESK_USERNAME')
+SUPERDESK_PASSWORD = env('SUPERDESK_PASSWORD')
