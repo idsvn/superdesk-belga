@@ -84,7 +84,7 @@ class AutoPublishService():
             return
 
         for item in list(resources):
-            if item['_type'] == 'ingest':
+            if item.get('_type') == 'ingest':
                 continue
             doc = get_resource_service('archive').find_one(req=None, _id=item['_id'])
             formatter = get_formatter('ninjs', item)
