@@ -27,7 +27,8 @@ INSTALLED_APPS.extend([
     'belga.image',
     'belga.io',
     'belga.command',
-    'belga.publish'
+    'belga.publish',
+    'belga.twitter',
 ])
 
 SECRET_KEY = env('SECRET_KEY', '')

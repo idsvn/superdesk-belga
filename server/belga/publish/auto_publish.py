@@ -10,17 +10,18 @@
 
 import json
 import logging
+import os
 import socket
 from base64 import b64encode
 from urllib.parse import urlparse
 
 import requests
+import twitter
 from eve.utils import ParsedRequest
 from flask import current_app as app
 
 from apps.auth.errors import CredentialsAuthError
 from apps.content_types import apply_schema
-from apps.publish.content.publish import ArchivePublishService
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.publish.formatters import get_formatter
@@ -59,14 +60,17 @@ class AutoPublishService():
     def auth(self):
         session_id = self._get_session_id(app.config['SUPERDESK_USERNAME'], app.config['SUPERDESK_PASSWORD'])
         token = self._get_token(session_id)
-        response = requests.post(
-            self.url + '/auth/superdesk/',
-            json={
-                'session_id': session_id,
-                'token': token,
-            }).json()
-        token = response.get('token', {}).get('api_key')
-        return token
+        try:
+            response = requests.post(
+                self.url + '/auth/superdesk/',
+                json={
+                    'session_id': session_id,
+                    'token': token,
+                }).json()
+            token = response['token']['api_key']
+            return token
+        except (ValueError, KeyError):
+            return ''
 
     def run(self):
         resources = self.get_resources()
@@ -100,8 +104,26 @@ class AutoPublishService():
             tenants = response.json().get('tenants')
             # no matching rules available
             if not tenants or not tenants[0].get('route'):
-                return
+                continue
             try:
+                # avoid packages item
+                if any([item.get('fields_meta'), item.get('body_html')]):
+                    with open('twitter_token.json') as f:
+                        try:
+                            twitter_token = json.load(f)
+                            twitter_api = twitter.Api(
+                                os.environ.get('TWITTER_KEY', ''),
+                                os.environ.get('TWITTER_KEY_SECRET', ''),
+                                twitter_token.get('oauth_token', ''),
+                                twitter_token.get('oauth_token_secret', '')
+                            )
+                            updates = item['headline']
+                            # twitter increase limit to 280 but the library still use 140 char limit
+                            if len(updates) > 130:
+                                updates = updates[:130]
+                            status = twitter_api.PostUpdate(updates)
+                        except Exception as e:
+                            pass
                 get_resource_service('archive_publish').patch(
                     id=item['_id'],
                     updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
