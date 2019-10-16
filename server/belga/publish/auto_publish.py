@@ -19,6 +19,7 @@ import requests
 import twitter
 from eve.utils import ParsedRequest
 from flask import current_app as app
+from lxml import etree
 
 from apps.auth.errors import CredentialsAuthError
 from apps.content_types import apply_schema
@@ -108,6 +109,7 @@ class AutoPublishService():
             try:
                 # avoid packages item
                 if any([item.get('fields_meta'), item.get('body_html')]):
+                    # twitter publishing
                     with open('token_twitter.json') as f:
                         try:
                             twitter_token = json.load(f)
@@ -121,9 +123,26 @@ class AutoPublishService():
                             # twitter increase limit to 280 but the library still use 140 char limit
                             if len(updates) > 130:
                                 updates = updates[:130]
-                            status = twitter_api.PostUpdate(updates)
+                            twitter_api.PostUpdate(updates)
                         except Exception as e:
-                            pass
+                            logger.error(e.args[0])
+                    # facebook publishing
+                    with open('token_facebook.json') as f:
+                        try:
+                            facebook_token = json.load(f)
+                            url = 'https://graph.facebook.com/v4.0/'
+                            pages = facebook_token.get('pages', '')
+                            content = item['headline'] + '\r\n\r\n' + etree.fromstring(item['body_html']).text
+                            for page in pages:
+                                request = requests.post(
+                                    url + page['id'] + '/feed',
+                                    params={'access_token': page['access_token']},
+                                    data={'message': content}
+                                )
+                                if request.status_code != 200:
+                                    logger.error(request.text)
+                        except Exception as e:
+                            logger.error(e.args[0])
                 get_resource_service('archive_publish').patch(
                     id=item['_id'],
                     updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
