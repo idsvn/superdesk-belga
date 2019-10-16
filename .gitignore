@@ -45,4 +45,5 @@ include/
 client/index.html
 client/templates-cache.js
 client/npm-debug.log
-twitter_token.json
+token_twitter.json
+token_facebook.json

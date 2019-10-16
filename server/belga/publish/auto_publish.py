@@ -108,7 +108,7 @@ class AutoPublishService():
             try:
                 # avoid packages item
                 if any([item.get('fields_meta'), item.get('body_html')]):
-                    with open('twitter_token.json') as f:
+                    with open('token_twitter.json') as f:
                         try:
                             twitter_token = json.load(f)
                             twitter_api = twitter.Api(

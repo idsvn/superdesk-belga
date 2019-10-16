@@ -28,7 +28,7 @@ def twitter_callback():
         token = g.client.fetch_access_token(access_token_url)
     except Exception as e:
         return jsonify({'error': e.args[0]})
-    with open('twitter_token.json', 'w') as f:
+    with open('token_twitter.json', 'w') as f:
         f.write(json.dumps(token))
     return jsonify({'message': 'OK'})
 
