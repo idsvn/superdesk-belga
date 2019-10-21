@@ -61,13 +61,19 @@ class AutoPublishService():
     def auth(self):
         session_id = self._get_session_id(app.config['SUPERDESK_USERNAME'], app.config['SUPERDESK_PASSWORD'])
         token = self._get_token(session_id)
+        auth_token = {
+            'auth_superdesk': {
+                'session_id': session_id,
+                'token': token,
+            }
+        }
+        if app.config['SUPERDESK_PUBLISHER_VERSION'] == 2:
+            auth_token = auth_token['auth_superdesk']
         try:
             response = requests.post(
                 self.url + '/auth/superdesk/',
-                json={
-                    'session_id': session_id,
-                    'token': token,
-                }).json()
+                json=auth_token
+            ).json()
             token = response['token']['api_key']
             return token
         except (ValueError, KeyError):
@@ -88,6 +94,7 @@ class AutoPublishService():
         if not token:
             return
 
+        published_item = 0
         for item in list(resources):
             if item.get('_type') == 'ingest':
                 continue
@@ -147,6 +154,7 @@ class AutoPublishService():
                     id=item['_id'],
                     updates={ITEM_STATE: CONTENT_STATE.PUBLISHED}
                 )
+                published_item += 1
                 logger.info('belga:publish:autopublish: Published item %s' % item.get('guid'))
             # invalid item raise outside app context
             except RuntimeError:
