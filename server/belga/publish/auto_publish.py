@@ -26,6 +26,7 @@ from apps.content_types import apply_schema
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
 from superdesk.publish.formatters import get_formatter
+from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +140,9 @@ class AutoPublishService():
                             facebook_token = json.load(f)
                             url = 'https://graph.facebook.com/v4.0/'
                             pages = facebook_token.get('pages', '')
-                            content = item['headline'] + '\r\n\r\n' + etree.fromstring(item['body_html']).text
+                            f = HTMLFilter()
+                            f.feed(item['body_html'])
+                            content = item['headline'] + '\r\n\r\n' +  f.text
                             for page in pages:
                                 request = requests.post(
                                     url + page['id'] + '/feed',
@@ -186,3 +189,8 @@ class AutoPublishService():
         token = creds.get('token').encode('ascii')
         encoded_token = b'basic ' + b64encode(token + b':')
         return encoded_token
+
+class HTMLFilter(HTMLParser):
+    text = ""
+    def handle_data(self, data):
+        self.text += data
