@@ -403,7 +403,7 @@ class BelgaNewsML12Formatter(NewsML12Formatter):
         :param dict picture: picture item
         """
 
-        self._set_belga_urn(picture)
+        # self._set_belga_urn(picture)
 
         # NewsComponent
         newscomponent_2_level = SubElement(newscomponent_1_level, 'NewsComponent')
@@ -479,7 +479,7 @@ class BelgaNewsML12Formatter(NewsML12Formatter):
         :param dict coverage: coverage data
         """
 
-        self._set_belga_urn(coverage)
+        # self._set_belga_urn(coverage)
 
         newscomponent_2_level = SubElement(newscomponent_1_level, 'NewsComponent')
         if coverage.get(GUID_FIELD):
@@ -530,7 +530,7 @@ class BelgaNewsML12Formatter(NewsML12Formatter):
         :param dict audio: audio item
         """
 
-        self._set_belga_urn(audio)
+        # self._set_belga_urn(audio)
 
         newscomponent_2_level = SubElement(newscomponent_1_level, 'NewsComponent')
         if audio.get(GUID_FIELD):
@@ -582,7 +582,7 @@ class BelgaNewsML12Formatter(NewsML12Formatter):
         :param dict audio: video item
         """
 
-        self._set_belga_urn(video)
+        # self._set_belga_urn(video)
 
         newscomponent_2_level = SubElement(newscomponent_1_level, 'NewsComponent')
         if video.get(GUID_FIELD):
@@ -768,7 +768,7 @@ class BelgaNewsML12Formatter(NewsML12Formatter):
         """
         contentitem = SubElement(
             newscomponent_3_level, 'ContentItem',
-            {'Href': r'{}'.format(rendition.get('belga-urn', rendition['href']))}
+            {'Href': r'{}'.format(rendition['href'])}
         )
 
         filename = rendition['filename'] if rendition.get('filename') else rendition['href'].rsplit('/', 1)[-1]
