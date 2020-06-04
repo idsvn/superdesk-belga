@@ -11,6 +11,7 @@ import updateArticleOnProfileChangeExtension from '../extensions/updateArticleOn
 import iptcExtension from '../extensions/iptc/dist/extension'
 import {AvatarContentText} from 'superdesk-ui-framework';
 import planningExtension from 'superdesk-planning/client/planning-extension/dist/extension';
+import videoEditorExtension from 'superdesk-core/scripts/extensions/videoEditor/dist/src/extension';
 
 class UserAvatar extends React.PureComponent<{user: Partial<IUser>}> {
     render() {
@@ -35,6 +36,7 @@ setTimeout(() => {
         belgaCoverageExtension,
         updateArticleOnProfileChangeExtension,
         iptcExtension,
+        videoEditorExtension,
     ],{UserAvatar});
 });
 
