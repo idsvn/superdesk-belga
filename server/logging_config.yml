@@ -13,14 +13,21 @@ disable_existing_loggers: False
 handlers:
   console:
     class: logging.StreamHandler
-    stream  : ext://sys.stdout
+    stream: ext://sys.stdout
+  graylog:
+    class: graypy.GELFUDPHandler
+    host: localhost
+    port: 12201
 loggers:
   # superdesk.ws - used for debug message can be removed later on.
-  superdesk.ws:
-    handlers: [console]
-    level: DEBUG
   worker:
-    handlers: [console]
+    handlers: [graylog]
     level: WARN
-  root:
+  superdesk:
+    handlers: [graylog]
+  superdesk.websockets_comms:
     handlers: [console]
+  apps:
+    handlers: [graylog]
+  root:
+    handlers: [graylog]
