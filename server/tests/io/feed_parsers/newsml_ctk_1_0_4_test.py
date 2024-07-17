@@ -28,10 +28,13 @@ class TestCase(unittest.TestCase):
             )
 
     def test_headline(self):
-        self.assertEqual(
-            self.item.get("headline"),
-            "Slovak PM Robert Fico, who is hospitalized after being shot by assassin, is out of danger of death, but recovery will take long time, hospital said.",
+        str1 = (
+            "Slovak PM Robert Fico, who is hospitalized after being shot by assassin, "
         )
+        str2 = "is out of danger of death, but recovery will take long time, hospital said."
+        string = f"{str1}{str2}"
+
+        self.assertEqual(self.item.get("headline"), string)
 
     def test_dateline(self):
         self.assertEqual(self.item.get("dateline", {}).get("text"), "May 19, 2024")
