@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NewsML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://newsml.ctk.cz/schema/NewsML_1.2.xsd"
+         xsi:schemaLocation="http://newsml.ctk.cz/ns/ctkxhtml.xsd http://newsml.ctk.cz/ns/ctkxhtml.xsd">
+   <Catalog Href="http://newsml.ctk.cz/catalog/CTK_Catalog.xml"/>
+   <NewsEnvelope>
+      <DateAndTime>20240519T115450+0200</DateAndTime>
+      <Priority FormalName="3"/>
+   </NewsEnvelope>
+   <NewsItem>
+      <Identification>
+         <NewsIdentifier>
+            <ProviderId>ctk.cz</ProviderId>
+            <DateId>20245102</DateId>
+            <NewsItemId>T2024051902729</NewsItemId>
+            <RevisionId PreviousRevision="0" Update="N">1</RevisionId>
+            <PublicIdentifier>urn:newsml:ctk.cz:20245102:T2024051902729:1</PublicIdentifier>
+         </NewsIdentifier>
+      </Identification>
+      <NewsManagement>
+         <NewsItemType FormalName="News"/>
+         <FirstCreated>20240519T115450+0200</FirstCreated>
+         <ThisRevisionCreated>20240519T115450+0200</ThisRevisionCreated>
+         <Status FormalName="Usable"/>
+         <Urgency FormalName="3"/>
+         <AssociatedWith FormalName="Thread"
+                          NewsItem="urn:newsml:ctk.cz:20240519:T2024051902729:1"/>
+      </NewsManagement>
+      <NewsComponent>
+         <NewsLines>
+            <HeadLine>Slovak PM Robert Fico, who is hospitalized after being shot by assassin, is out of danger of death, but recovery will take long time, hospital said.</HeadLine>
+            <CopyrightLine>CTK</CopyrightLine>
+            <KeywordLine>Slovakia;Fico;crime;health;HEADLINE</KeywordLine>
+         </NewsLines>
+         <DescriptiveMetadata>
+            <Language FormalName="en"/>
+            <Location HowPresent="Origin">
+               <Property FormalName="Country" Value="Slovakia"/>
+            </Location>
+            <Property FormalName="Region" Value="es"/>
+            <Property FormalName="Desk" Value="c"/>
+            <Property FormalName="Category" Value="eng"/>
+            <Property FormalName="Keyword1" Value="Slovakia"/>
+            <Property FormalName="Keyword2" Value="Fico"/>
+            <Property FormalName="Keyword2" Value="crime"/>
+            <Property FormalName="Keyword2" Value="health"/>
+            <Property FormalName="Keyword4" Value="HEADLINE"/>
+            <Property FormalName="DocumentType" Value="Text"/>
+         </DescriptiveMetadata>
+         <ContentItem>
+            <MediaType FormalName="Text"/>
+            <Format FormalName="CTKXHTML"/>
+            <MimeType FormalName="text/xml"/>
+            <Characteristics>
+               <SizeInBytes>148</SizeInBytes>
+            </Characteristics>
+            <DataContent>
+               <body xmlns="http://newsml.ctk.cz/ns/ctkxhtml.xsd">
+                  <p>Slovak PM Robert Fico, who is hospitalized after being shot by assassin, is out of danger of death, but recovery will take long time, hospital said.</p>
+               </body>
+            </DataContent>
+         </ContentItem>
+      </NewsComponent>
+   </NewsItem>
+</NewsML>
