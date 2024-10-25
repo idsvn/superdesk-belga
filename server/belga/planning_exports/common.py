@@ -81,12 +81,18 @@ def get_item_location(
     location_items = []
     if not is_only_city_and_country:
         address = location[0].get("address", {})
+        address_line = address.get("line", [""])[0]
+
+        # Check if name and address line are identical, and skip address if they are
+        if location_name.lower() != address_line.lower():
+            location_items.append(reorder_address(location_name))
+            location_items.append(reorder_address(address_line))
+        else:
+            location_items.append(reorder_address(location_name))
+
         location_items.extend(
             [
-                location_name,
-                address.get("line", [""])[0],
-                address.get("postal_code", ""),
-                address.get("city") or address.get("area", ""),
+                f'{address.get("postal_code", "")} {address.get("city") or address.get("area", "")}',
                 address.get("country", ""),
             ]
         )
@@ -126,7 +132,7 @@ def get_subjects(event: Dict[str, Any], language: str):
 def format_datetime(event: Dict[str, Any], locale: str, format: str):
     tz = event.get("dates", {}).get("tz") or app.config.get("DEFAULT_TIMEZONE")
     start_time = event.get("dates", {}).get("start")
-    return format_date(utc_to_local(tz, start_time), format, locale=locale).capitalize()
+    return format_date(utc_to_local(tz, start_time), format, locale=locale)
 
 
 def set_metadata(formatted_event: Dict[str, Any], event: Dict[str, Any], locale: str):
@@ -190,9 +196,9 @@ def get_coverages(event: Dict[str, Any], locale: str):
                 coverage.get("news_coverage_status", {}).get("label", "").upper()
             )
 
-            formatted_coverages.append(
-                f"{cov_type} ({cov_status})"
-            ) if cov_planning.get("language", locale) == locale else []
+            if cov_planning.get("language", locale) == locale:
+                formatted_coverages.append(f"{cov_type} ({cov_status})")
+
     return formatted_coverages
 
 
@@ -224,3 +230,14 @@ def set_event_translations_value(event: Dict[str, Any], locale: str):
                 )
             }
         )
+
+
+def reorder_address(address: str) -> str:
+    """
+    Reorder an address string by moving the leading number (if present)
+    to the end of the string.
+    """
+    parts = address.split(" ", 1)
+    if parts[0].isdigit() and len(parts) == 2:
+        return f"{parts[1]} {parts[0]}"
+    return address
