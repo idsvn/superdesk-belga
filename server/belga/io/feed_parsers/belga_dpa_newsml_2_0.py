@@ -174,10 +174,14 @@ class BelgaDPANewsMLTwoFeedParser(BelgaNewsMLMixin, NewsMLTwoFeedParser):
 
     def parse_item_meta(self, tree, item):
         super().parse_item_meta(tree, item)
+
         meta = tree.find(self.qname("itemMeta"))
-        edNote = meta.find(self.qname("edNote"))
-        text = ElementTree.tostring(edNote, encoding="utf-8", method="text")
-        item["ednote"] = text.decode("utf-8").replace(" \n", "").replace("  ", "")
+        item["ednote"] = "\n".join(
+            edNote.text.strip()
+            for edNote in meta.findall(self.qname("edNote"))
+            if "dpaednoterole:correctionshort" == edNote.attrib.get("role", "")
+            and edNote.text
+        )
 
     def parse_content_meta(self, tree, item):
         meta = super().parse_content_meta(tree, item)
