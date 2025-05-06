@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 import logging
 from copy import deepcopy
+from .common import get_cv_by_qcode
 from superdesk import get_resource_service
 from superdesk.errors import StopDuplication
 from apps.archive.common import ITEM_DUPLICATE
@@ -16,6 +17,32 @@ from .set_default_metadata import get_default_content_template, set_default_meta
 from .update_translation_metadata_macro import update_translation_metadata_macro
 
 logger = logging.getLogger(__name__)
+
+
+def _map_eco_package_subject(original_item):
+    """Map BTL/ECO to EXT/ECO and vice versa if present in original_item."""
+    mapping = {"BTL/ECO": "EXT/ECO", "EXT/ECO": "BTL/ECO"}
+
+    for subj in original_item.get("subject", []):
+        if subj.get("scheme") == "services-products":
+            return mapping.get(subj.get("qcode"))
+    return None
+
+
+def _preserve_eco_package(original_item, new_item):
+    """Preserve and map ECO package subject from original_item to new_item using CV."""
+
+    mapped_qcode = _map_eco_package_subject(original_item)
+
+    if not mapped_qcode:
+        return
+
+    vocab_item = get_cv_by_qcode("services-products").get(mapped_qcode)
+
+    if not vocab_item:
+        return
+
+    new_item["subject"].append(vocab_item)
 
 
 def set_belga_keywords(item):
@@ -127,6 +154,9 @@ def set_default_metadata_with_translate(item, **kwargs):
         kwargs["overwrite_keywords"] = False
 
     set_default_metadata(new_item, **kwargs)
+
+    # preserve original ECO package mapping
+    _preserve_eco_package(original_item, new_item)
 
     # untoggle coming up
     if new_item.get("extra", {}).get("DueBy"):
