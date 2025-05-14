@@ -143,6 +143,10 @@ setTimeout(() => {
                 return widget;
             }),
         },
+        {
+            id: 'availability-manager',
+            load: () => import('superdesk-core/scripts/extensions/availability-manager'),
+        },
     ], {
         UserAvatar,
     });
