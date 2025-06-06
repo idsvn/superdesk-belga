@@ -2,8 +2,8 @@
     "name": "superdesk",
     "license": "GPL-3.0",
     "dependencies": {
-        "superdesk-core": "github:tomaskikutis/superdesk-client-core#correspondent-availability-view",
-        "superdesk-planning": "github:superdesk/superdesk-planning#develop"
+        "superdesk-core": "github:superdesk/superdesk-client-core#feature/availability",
+        "superdesk-planning": "github:superdesk/superdesk-planning#release/2.10"
     },
     "devDependencies": {
         "@superdesk/build-tools": "^1.0.19"

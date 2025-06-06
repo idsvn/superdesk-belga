@@ -26,9 +26,9 @@ blinker==1.9.0
     #   flask-mail
     #   sentry-sdk
     #   superdesk-core
-boto3==1.38.15
+boto3==1.38.31
     # via superdesk-core
-botocore==1.38.15
+botocore==1.38.31
     # via
     #   boto3
     #   s3transfer
@@ -58,7 +58,7 @@ charset-normalizer==3.4.2
     # via requests
 ciso8601==2.3.2
     # via eve-elastic
-click==8.2.0
+click==8.2.1
     # via
     #   celery
     #   click-didyoumean
@@ -74,7 +74,7 @@ click-repl==0.3.0
     # via celery
 croniter==6.0.0
     # via superdesk-core
-cryptography==44.0.3
+cryptography==45.0.3
     # via
     #   authlib
     #   jwcrypto
@@ -117,7 +117,7 @@ flask-script==2.0.6
     # via superdesk-core
 future==1.0.0
     # via python-twitter
-google-auth==2.40.1
+google-auth==2.40.3
     # via
     #   google-auth-oauthlib
     #   gspread
@@ -249,7 +249,7 @@ redis==5.2.1
     #   superdesk-core
 regex==2024.11.6
     # via superdesk-core
-reportlab==4.4.0
+reportlab==4.4.1
     # via superdesk-core
 requests==2.32.3
     # via
@@ -264,9 +264,9 @@ rsa==4.9.1
     # via
     #   google-auth
     #   oauth2client
-s3transfer==0.12.0
+s3transfer==0.13.0
     # via boto3
-sentry-sdk[flask]==2.28.0
+sentry-sdk[flask]==2.29.1
     # via superdesk-core
 sgmllib3k==1.0.0
     # via feedparser
@@ -279,13 +279,13 @@ six==1.17.0
     #   python-dateutil
 superdesk-analytics @ git+https://github.com/superdesk/superdesk-analytics.git@develop
     # via -r requirements.in
-superdesk-core @ git+https://github.com/superdesk/superdesk-core.git@feature/availability
+superdesk-core @ git+https://github.com/superdesk/superdesk-core.git@release/2.10
     # via -r requirements.in
-superdesk-planning @ git+https://github.com/superdesk/superdesk-planning.git@feature/availability
+superdesk-planning @ git+https://github.com/superdesk/superdesk-planning.git@release/2.10
     # via -r requirements.in
-types-python-dateutil==2.9.0.20241206
+types-python-dateutil==2.9.0.20250516
     # via arrow
-typing-extensions==4.13.2
+typing-extensions==4.14.0
     # via jwcrypto
 tzdata==2025.2
     # via
