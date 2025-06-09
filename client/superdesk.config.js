@@ -7,12 +7,12 @@
 module.exports = function(grunt) {
     return {
         apps: [
-            //'superdesk.analytics',
+            'superdesk.analytics',
             'superdesk-planning',
             'belga',
         ],
         importApps: [
-            //'superdesk-analytics',
+            'superdesk-analytics',
             'superdesk-planning',
             '../index',
         ],
@@ -22,6 +22,7 @@ module.exports = function(grunt) {
         shortTimeFormat: 'HH:mm, DD.MM.YYYY',
         shortDateFormat: 'HH:mm, DD.MM.YYYY',
         shortWeekFormat: 'HH:mm, DD.MM.YYYY',
+        startingDay: '1',
 
         view: {
             timeformat: 'HH:mm',
