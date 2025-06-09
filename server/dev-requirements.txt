@@ -4,13 +4,12 @@ black==25.1.0
 flake8==7.2.0
 pep8==1.7.1
 httmock==1.4.0
-mypy==1.15.0
-pytest==8.3.5
+mypy==1.16.0
+pytest==8.4.0
 types-click==7.1.8
-types-docutils==0.21.0.20241128
 types-Flask==1.1.6
 types-Jinja2==2.11.9
 types-MarkupSafe==1.1.10
-types-pytz==2025.2.0.20250326
+types-pytz==2025.2.0.20250516
 types-requests==0.1.13
 types-Werkzeug==1.0.9
