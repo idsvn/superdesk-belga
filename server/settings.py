@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "superdesk.text_checkers.spellcheckers.grammalecte",
     "superdesk.text_checkers.spellcheckers.leuven_dutch",
     "belga.planning_exports",
+    "belga.contacts",
 ]
 
 SECRET_KEY = env("SECRET_KEY", "")
